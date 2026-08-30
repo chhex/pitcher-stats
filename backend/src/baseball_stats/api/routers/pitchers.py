@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from baseball_stats.core.lookup import get_player_register, search_pitchers
 from baseball_stats.api.schemas import PitcherMatch
+import math
 
 router = APIRouter(prefix="/pitchers", tags=["pitchers"])
 
@@ -12,8 +13,8 @@ def search(name: str):
         PitcherMatch(
             key_mlbam=row.key_mlbam,
             full_name=row.full_name,
-            mlb_played_first=row.mlb_played_first,
-            mlb_played_last=row.mlb_played_last,
+            mlb_played_first=None if math.isnan(row.mlb_played_first) else int(row.mlb_played_first),
+            mlb_played_last=None if math.isnan(row.mlb_played_last) else int(row.mlb_played_last),
         )
         for row in matches.itertuples()
     ]

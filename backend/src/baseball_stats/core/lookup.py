@@ -24,10 +24,11 @@ def get_player_register() -> pd.DataFrame:
 
 
 def search_pitchers(register: pd.DataFrame, name: str) -> pd.DataFrame:
-    """Sucht Pitcher per Teilstring-Match im vollen Namen (case-insensitive)."""
     register = register.dropna(subset=["key_mlbam", "name_first", "name_last"]).copy()
     register["full_name"] = register["name_first"].str.title() + " " + register["name_last"].str.title()
-    return register[register["full_name"].str.contains(name, case=False, na=False)]
+    results = register[register["full_name"].str.contains(name, case=False, na=False)].copy()
+    results = results.where(pd.notna(results), None)
+    return results
 
 
 def get_pitcher_by_id(register: pd.DataFrame, key_mlbam: int) -> pd.Series | None:
