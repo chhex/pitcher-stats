@@ -10,6 +10,7 @@ class GameInfo(BaseModel):
     game_pk: int
     game_date: str
     opponent: str
+    decision: str  # "W" / "L" / "ND"
 
 class PitchStat(BaseModel):
     pitch_name: str

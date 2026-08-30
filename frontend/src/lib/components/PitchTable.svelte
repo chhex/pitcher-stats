@@ -18,35 +18,63 @@
   };
 
   let { summary }: { summary: GameSummary } = $props();
+
+  const decisionBadge: Record<string, string> = {
+    W: 'badge-success',
+    L: 'badge-error',
+    ND: 'badge-neutral',
+  };
 </script>
 
-<section class="border-t border-gray-200 pt-4 space-y-2">
-  <h3 class="text-lg font-semibold">
-    {summary.game_date} — {summary.opponent}
-    <span class="text-sm font-normal text-gray-500">({summary.decision})</span>
-  </h3>
-  <p class="text-sm text-gray-600">
-    IP: {summary.innings_pitched} · ERA: {summary.era} ·
-    K: {summary.strikeouts} · Pitches: {summary.total_pitches}
-  </p>
-  <table class="w-full text-sm border-collapse">
-    <thead>
-      <tr class="border-b border-gray-300 text-left">
-        <th class="py-1 pr-4">Pitch</th>
-        <th class="py-1 pr-4">Anzahl</th>
-        <th class="py-1 pr-4">Ø Speed</th>
-        <th class="py-1">%</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each summary.pitch_stats as p (p.pitch_name)}
-        <tr class="border-b border-gray-100">
-          <td class="py-1 pr-4">{p.pitch_name}</td>
-          <td class="py-1 pr-4">{p.count}</td>
-          <td class="py-1 pr-4">{p.avg_speed.toFixed(1)}</td>
-          <td class="py-1">{p.pct}%</td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-</section>
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body gap-3">
+    <h3 class="card-title text-base">
+      {summary.game_date} — {summary.opponent}
+      <span class="badge {decisionBadge[summary.decision] ?? 'badge-neutral'}">
+        {summary.decision}
+      </span>
+    </h3>
+
+    <div class="stats stats-horizontal shadow-none bg-base-200">
+      <div class="stat py-2 px-4">
+        <div class="stat-title text-xs">IP</div>
+        <div class="stat-value text-lg">{summary.innings_pitched}</div>
+      </div>
+      <div class="stat py-2 px-4">
+        <div class="stat-title text-xs">ERA</div>
+        <div class="stat-value text-lg">{summary.era}</div>
+      </div>
+      <div class="stat py-2 px-4">
+        <div class="stat-title text-xs">K</div>
+        <div class="stat-value text-lg">{summary.strikeouts}</div>
+      </div>
+      <div class="stat py-2 px-4">
+        <div class="stat-title text-xs">Pitches</div>
+        <div class="stat-value text-lg">{summary.total_pitches}</div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-zebra table-sm">
+        <thead>
+          <tr>
+            <th>Pitch</th>
+            <th>Anzahl</th>
+            <th>Ø Speed</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each summary.pitch_stats as p (p.pitch_name)}
+            <tr>
+              <td>{p.pitch_name}</td>
+              <td>{p.count}</td>
+              <td>{p.avg_speed.toFixed(1)}</td>
+              <td>{p.pct}%</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

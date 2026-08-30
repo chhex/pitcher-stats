@@ -6,6 +6,7 @@
 	import Checkbox from '$lib/components/Checkbox.svelte';
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import PitchTable from '$lib/components/PitchTable.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 
 	type GameSummary = {
 		game_date: string;
@@ -32,19 +33,34 @@
 		game_pk: number;
 		game_date: string;
 		opponent: string;
+		decision: string;
 	};
 
 	let name = $state('');
 	let matches = $state<Pitcher[]>([]);
 	let selectedPitcherId = $state<number | null>(null);
+	let selectedPitcherName = $state<string | null>(null);
 	let startDate = $state('2026-01-01');
 	let endDate = $state('2026-12-31');
 	let games = $state<Game[]>([]);
-	// svelte-ignore non_reactive_update
 	let selectedGamePks = new SvelteSet<number>();
 	let summaries = $state<GameSummary[]>([]);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
+
+	let searchModalOpen = $state(false);
+
+	function openSearchModal() {
+		// Alte Ergebnisse zurücksetzen, da eine neue Suche gestartet wird
+		matches = [];
+		selectedPitcherId = null;
+		selectedPitcherName = null;
+		games = [];
+		selectedGamePks.clear();
+		summaries = [];
+		error = null;
+		searchModalOpen = true;
+	}
 
 	async function doSearch() {
 		error = null;
@@ -53,6 +69,11 @@
 		} catch (e) {
 			error = e.message;
 		}
+	}
+
+	function selectPitcher(m: Pitcher) {
+		selectedPitcherId = m.key_mlbam;
+		selectedPitcherName = m.full_name;
 	}
 
 	async function loadGames() {
@@ -64,7 +85,11 @@
 		error = null;
 		try {
 			games = await listGames(selectedPitcherId, startDate, endDate);
-			if (games.length === 0) error = 'Keine Spiele im Zeitraum gefunden';
+			if (games.length === 0) {
+				error = 'Keine Spiele im Zeitraum gefunden';
+			} else {
+				searchModalOpen = false;
+			}
 		} catch (e) {
 			error = e.message;
 		} finally {
@@ -82,9 +107,7 @@
 
 	function selectAllGames() {
 		selectedGamePks.clear();
-		for (const g of games) {
-			selectedGamePks.add(g.game_pk);
-		}
+		for (const g of games) selectedGamePks.add(g.game_pk);
 	}
 
 	function selectNoGames() {
@@ -108,75 +131,112 @@
 			loading = false;
 		}
 	}
-
-	function clearAll() {
-		name = '';
-		matches = [];
-		selectedPitcherId = null;
-		games = [];
-		selectedGamePks.clear(); // statt: selectedGamePks = new SvelteSet();
-		summaries = [];
-		error = null;
-	}
 </script>
 
-<main class="mx-auto max-w-3xl space-y-8 p-6 text-gray-900">
-	<div class="flex items-center justify-between">
-		<h1 class="text-3xl font-bold">Pitcher Stats</h1>
-		<Button variant="secondary" onclick={clearAll}>Zurücksetzen</Button>
+<header class="navbar bg-base-100 shadow-sm">
+	<div class="navbar-start">
+		<span class="text-xl font-bold">Pitcher Stats</span>
 	</div>
+</header>
 
+<main class="mx-auto max-w-3xl space-y-6 p-6">
 	<ErrorMessage message={error} />
 
-	<section class="flex flex-wrap items-center gap-2">
-		<TextInput bind:value={name} placeholder="Pitcher Name" disabled={games.length > 0} />
-		<Button onclick={doSearch} disabled={games.length > 0}>Suchen</Button>
-
-		{#if matches.length > 0}
-			<select
-				bind:value={selectedPitcherId}
-				disabled={games.length > 0}
-				class="rounded border border-gray-300 px-3 py-2 disabled:bg-gray-100 disabled:opacity-50"
-			>
-				<option value={null} disabled selected>Pitcher wählen</option>
-				{#each matches as m (m.key_mlbam)}
-					<option value={m.key_mlbam}>{m.full_name}</option>
-				{/each}
-			</select>
+	<div class="flex items-center gap-3">
+		<Button onclick={openSearchModal}>Pitcher & Zeitraum wählen</Button>
+		{#if selectedPitcherName}
+			<span class="badge badge-lg">{selectedPitcherName} · {startDate} bis {endDate}</span>
 		{/if}
-	</section>
+	</div>
 
-	<section class="flex flex-wrap items-center gap-2">
-		<TextInput
-			type="date"
-			bind:value={startDate}
-			disabled={!selectedPitcherId || games.length > 0}
-		/>
-		<TextInput type="date" bind:value={endDate} disabled={!selectedPitcherId || games.length > 0} />
-		<Button onclick={loadGames} disabled={loading || !selectedPitcherId || games.length > 0}>
-			Spiele laden
-		</Button>
-	</section>
+{#if games.length > 0}
+  <fieldset class="fieldset rounded-box border border-base-300 bg-base-200 p-4">
+    <legend class="fieldset-legend">Spiele</legend>
 
-	{#if games.length > 0}
-		<section class="space-y-2">
-			<div class="flex items-center justify-between">
-				<h2 class="text-lg font-semibold">Spiele</h2>
-				<div class="flex gap-2">
-					<Button variant="secondary" onclick={selectAllGames}>Alle</Button>
-					<Button variant="secondary" onclick={selectNoGames}>Keine</Button>
-				</div>
-			</div>
-			{#each games as g (g.game_pk)}
-				<Checkbox checked={selectedGamePks.has(g.game_pk)} onchange={() => toggleGame(g.game_pk)}>
-					{g.game_date} — {g.opponent}
-				</Checkbox>
-			{/each}
-			<Button variant="success" onclick={showSelected} disabled={loading}>Anzeigen</Button>
-		</section>
-	{/if}
+    <div class="mb-2 flex justify-end gap-2">
+      <Button variant="secondary" onclick={selectAllGames}>Alle</Button>
+      <Button variant="secondary" onclick={selectNoGames}>Keine</Button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="table table-zebra table-sm">
+        <thead>
+          <tr>
+            <th class="w-8"></th>
+            <th>Datum</th>
+            <th>Gegner</th>
+            <th>Resultat</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each games as g (g.game_pk)}
+            <tr class="hover cursor-pointer" onclick={() => toggleGame(g.game_pk)}>
+              <th>
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  checked={selectedGamePks.has(g.game_pk)}
+                  onclick={(e) => e.stopPropagation()}
+                  onchange={() => toggleGame(g.game_pk)}
+                />
+              </th>
+              <td>{g.game_date}</td>
+              <td>{g.opponent}</td>
+              <td>
+                <span
+                  class="badge {g.decision === 'W'
+                    ? 'badge-success'
+                    : g.decision === 'L'
+                      ? 'badge-error'
+                      : 'badge-neutral'}"
+                >
+                  {g.decision}
+                </span>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+
+    <Button variant="success" onclick={showSelected} disabled={loading}>Anzeigen</Button>
+  </fieldset>
+{/if}
 
 	{#each summaries as s (s.game_date + s.opponent)}
 		<PitchTable summary={s} />
 	{/each}
 </main>
+
+<Modal bind:open={searchModalOpen} title="Pitcher & Zeitraum">
+  <div class="space-y-4">
+    <div class="join">
+      <TextInput bind:value={name} placeholder="Pitcher Name" joinItem />
+      <Button onclick={doSearch} joinItem>Suchen</Button>
+    </div>
+
+    {#if matches.length > 0}
+      <select
+        value={selectedPitcherId}
+        onchange={(e) => {
+          const id = Number(e.currentTarget.value);
+          const m = matches.find((m) => m.key_mlbam === id);
+          if (m) selectPitcher(m);
+        }}
+        class="select select-bordered w-full"
+      >
+        <option value={null} disabled selected>Pitcher wählen</option>
+        {#each matches as m (m.key_mlbam)}
+          <option value={m.key_mlbam}>{m.full_name}</option>
+        {/each}
+      </select>
+    {/if}
+
+    <div class="join">
+      <TextInput type="date" bind:value={startDate} joinItem />
+      <TextInput type="date" bind:value={endDate} joinItem />
+    </div>
+
+    <Button onclick={loadGames} disabled={loading || !selectedPitcherId}>Spiele laden</Button>
+  </div>
+</Modal>

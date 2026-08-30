@@ -20,5 +20,5 @@
   autocomplete="off"
   data-lpignore="true"
   data-1p-ignore
-  class="border border-gray-300 rounded px-3 py-2 disabled:opacity-50 disabled:bg-gray-100"
+  class="input input-bordered"
 />

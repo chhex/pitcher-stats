@@ -4,21 +4,31 @@ from baseball_stats.core.games import fetch_games_in_range, summarize_game
 
 router = APIRouter(prefix="/pitchers/{pitcher_id}/games", tags=["games"])
 
+from baseball_stats.core.boxscore import fetch_game_details
+
 @router.get("", response_model=list[GameInfo])
 def list_games(pitcher_id: int, start: str, end: str):
-    print(f"Fetching games for pitcher_id={pitcher_id} from {start} to {end}")
     raw, games = fetch_games_in_range(pitcher_id, start, end)
     if games.empty:
         return []
-    return [
-        GameInfo(
-            game_pk=int(row.game_pk),
-            game_date=row.game_date,
-            opponent=f"{row.away_team} @ {row.home_team}",
-        )
-        for row in games.itertuples()
-    ]
 
+    result = []
+    for row in games.itertuples():
+        try:
+            details = fetch_game_details(int(row.game_pk), pitcher_id)
+            decision = details["decision"]
+        except ValueError:
+            decision = "?"  # Spiel noch nicht final
+
+        result.append(
+            GameInfo(
+                game_pk=int(row.game_pk),
+                game_date=row.game_date,
+                opponent=f"{row.away_team} @ {row.home_team}",
+                decision=decision,
+            )
+        )
+    return result
 
 @router.get("/{game_pk}", response_model=GameSummary)
 def game_summary(pitcher_id: int, game_pk: int, start: str, end: str):

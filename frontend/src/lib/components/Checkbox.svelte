@@ -13,6 +13,6 @@
 </script>
 
 <label class="flex items-center gap-2 py-1">
-  <input type="checkbox" {checked} {onchange} class="rounded border-gray-300" />
+  <input type="checkbox" {checked} {onchange} class="checkbox" />
   <span>{@render children()}</span>
 </label>    
