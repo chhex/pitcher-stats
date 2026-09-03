@@ -120,23 +120,29 @@
 
 		loading = true;
 		error = '';
+		trendSummaries = [];
 
 		try {
-			trendSummaries = await Promise.all(
-				gamePks.map((gamePk) => getGameSummary(pitcherId!, gamePk, startDate, endDate))
-			);
+			const summaries: GameSummary[] = [];
+			const batchSize = 4;
 
+			for (let i = 0; i < gamePks.length; i += batchSize) {
+				const batch = gamePks.slice(i, i + batchSize);
+
+				const results = await Promise.all(
+					batch.map((gamePk) => getGameSummary(pitcherId!, gamePk, startDate, endDate))
+				);
+
+				summaries.push(...results);
+			}
+
+			trendSummaries = summaries;
 			view = 'trends';
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load trend data.';
 		} finally {
 			loading = false;
 		}
-	}
-
-	function backToGames() {
-		view = 'games';
-		error = '';
 	}
 </script>
 
