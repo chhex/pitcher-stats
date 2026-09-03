@@ -1,242 +1,194 @@
 <script lang="ts">
-	import { searchPitchers, listGames, getGameSummary } from '$lib/api.js';
-	import { SvelteSet } from 'svelte/reactivity';
-	import Button from '$lib/components/Button.svelte';
-	import TextInput from '$lib/components/TextInput.svelte';
-	import Checkbox from '$lib/components/Checkbox.svelte';
-	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
-	import PitchTable from '$lib/components/PitchTable.svelte';
-	import Modal from '$lib/components/Modal.svelte';
+	import { listGames, getGameSummary } from '$lib/api';
 
-	type GameSummary = {
-		game_date: string;
-		opponent: string;
-		decision: string;
-		innings_pitched: string;
-		era: string;
-		strikeouts: number;
-		total_pitches: number;
-		pitch_stats: Array<{
-			pitch_name: string;
-			count: number;
-			avg_speed: number;
-			pct: number;
-		}>;
-	};
-
-	type Pitcher = {
-		key_mlbam: number;
-		full_name: string;
-	};
+	import PitcherSearch from '$lib/components/PitcherSearch.svelte';
+	import GameList from '$lib/components/GameList.svelte';
+	import ErrorAlert from '$lib/components/ErrorAlert.svelte';
+	import GameDetails from '$lib/components/GameDetails.svelte';
+	import TrendAnalysis from '$lib/components/TrendAnalysis.svelte';
 
 	type Game = {
 		game_pk: number;
 		game_date: string;
 		opponent: string;
+		result: string;
 		decision: string;
 	};
 
-	let name = $state('');
-	let matches = $state<Pitcher[]>([]);
-	let selectedPitcherId = $state<number | null>(null);
-	let selectedPitcherName = $state<string | null>(null);
-	let startDate = $state('2026-01-01');
-	let endDate = $state('2026-12-31');
+	type GameSummary = {
+		game_date: string;
+		opponent: string;
+		result: string;
+		innings_pitched: number;
+		era: number;
+		strikeouts: number;
+		pitches: number;
+		pitch_mix: {
+			pitch_type: string;
+			count: number;
+			avg_speed: number;
+			percentage: number;
+		}[];
+	};
+
+	let pitcherId = $state<number | null>(null);
+	let pitcherName = $state('');
+
+	let startDate = $state('');
+	let endDate = $state('');
+
 	let games = $state<Game[]>([]);
-	let selectedGamePks = new SvelteSet<number>();
-	let summaries = $state<GameSummary[]>([]);
+	let selectedGameSummary = $state<GameSummary | null>(null);
+	let trendGamePks = $state<number[]>([]);
+
 	let loading = $state(false);
-	let error = $state<string | null>(null);
+	let error = $state('');
 
-	let searchModalOpen = $state(false);
+	let view = $state<'games' | 'details' | 'trends'>('games');
 
-	function openSearchModal() {
-		// Alte Ergebnisse zurücksetzen, da eine neue Suche gestartet wird
-		matches = [];
-		selectedPitcherId = null;
-		selectedPitcherName = null;
+	function startNewPitcherSearch() {
+		pitcherId = null;
+		pitcherName = '';
+
+		startDate = '';
+		endDate = '';
+
 		games = [];
-		selectedGamePks.clear();
-		summaries = [];
-		error = null;
-		searchModalOpen = true;
+		selectedGameSummary = null;
+		trendGamePks = [];
+		trendSummaries = [];
+
+		view = 'games';
+		error = '';
 	}
 
-	async function doSearch() {
-		error = null;
-		try {
-			matches = await searchPitchers(name);
-		} catch (e) {
-			error = e.message;
-		}
-	}
+	async function loadGames(id: number, name: string, start: string, end: string) {
+		/*
+		 * Nicht startNewPitcherSearch() aufrufen:
+		 * wir wollen die gerade gewählte neue Auswahl
+		 * jetzt in den Seiten-State übernehmen.
+		 */
 
-	function selectPitcher(m: Pitcher) {
-		selectedPitcherId = m.key_mlbam;
-		selectedPitcherName = m.full_name;
-	}
+		pitcherId = id;
+		pitcherName = name;
 
-	async function loadGames() {
-		if (!selectedPitcherId) {
-			error = 'Bitte zuerst Pitcher auswählen';
-			return;
-		}
+		startDate = start;
+		endDate = end;
+
+		games = [];
+		selectedGameSummary = null;
+		trendGamePks = [];
+
+		view = 'games';
+		error = '';
 		loading = true;
-		error = null;
+
 		try {
-			games = await listGames(selectedPitcherId, startDate, endDate);
+			games = await listGames(id, start, end);
+
 			if (games.length === 0) {
-				error = 'Keine Spiele im Zeitraum gefunden';
-			} else {
-				searchModalOpen = false;
+				error = 'No games found for the selected period.';
 			}
 		} catch (e) {
-			error = e.message;
+			error = e instanceof Error ? e.message : 'Failed to load games.';
 		} finally {
 			loading = false;
 		}
 	}
 
-	function toggleGame(gamePk: number) {
-		if (selectedGamePks.has(gamePk)) {
-			selectedGamePks.delete(gamePk);
-		} else {
-			selectedGamePks.add(gamePk);
-		}
-	}
+	async function viewGame(gamePk: number) {
+		if (pitcherId === null) return;
 
-	function selectAllGames() {
-		selectedGamePks.clear();
-		for (const g of games) selectedGamePks.add(g.game_pk);
-	}
-
-	function selectNoGames() {
-		selectedGamePks.clear();
-	}
-
-	async function showSelected() {
-		if (selectedGamePks.size === 0) {
-			error = 'Keine Spiele ausgewählt';
-			return;
-		}
 		loading = true;
-		error = null;
+		error = '';
+
 		try {
-			summaries = await Promise.all(
-				[...selectedGamePks].map((pk) => getGameSummary(selectedPitcherId, pk, startDate, endDate))
-			);
+			selectedGameSummary = await getGameSummary(pitcherId, gamePk, startDate, endDate);
+
+			view = 'details';
 		} catch (e) {
-			error = e.message;
+			error = e instanceof Error ? e.message : 'Fehler beim Laden der Spieldetails.';
 		} finally {
 			loading = false;
 		}
+	}
+
+	let trendSummaries = $state<GameSummary[]>([]);
+
+	async function analyzeTrends(gamePks: number[]) {
+		if (pitcherId === null) return;
+
+		loading = true;
+		error = '';
+
+		try {
+			trendSummaries = await Promise.all(
+				gamePks.map((gamePk) => getGameSummary(pitcherId!, gamePk, startDate, endDate))
+			);
+
+			view = 'trends';
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Failed to load trend data.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	function backToGames() {
+		view = 'games';
+		error = '';
 	}
 </script>
 
-<header class="navbar bg-base-100 shadow-sm">
-	<div class="navbar-start">
-		<span class="text-xl font-bold">Pitcher Stats</span>
-	</div>
-</header>
+<svelte:head>
+	<title>Pitcher Stats</title>
+	<meta name="description" content="Analyze MLB pitcher performance and pitch data." />
+</svelte:head>
 
-<main class="mx-auto max-w-3xl space-y-6 p-6">
-	<ErrorMessage message={error} />
+<div class="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+	<header>
+		<h1 class="text-3xl font-bold tracking-tight">Pitcher Stats</h1>
 
-	<div class="flex items-center gap-3">
-		<Button onclick={openSearchModal}>Pitcher & Zeitraum wählen</Button>
-		{#if selectedPitcherName}
-			<span class="badge badge-lg">{selectedPitcherName} · {startDate} bis {endDate}</span>
-		{/if}
-	</div>
+		<p class="mt-1 text-base-content/60">
+			Analyze pitching performance, pitch mix and game trends.
+		</p>
+	</header>
 
-{#if games.length > 0}
-  <fieldset class="fieldset rounded-box border border-base-300 bg-base-200 p-4">
-    <legend class="fieldset-legend">Spiele</legend>
+	<PitcherSearch onFindGames={loadGames} onNewSearch={startNewPitcherSearch} />
 
-    <div class="mb-2 flex justify-end gap-2">
-      <Button variant="secondary" onclick={selectAllGames}>Alle</Button>
-      <Button variant="secondary" onclick={selectNoGames}>Keine</Button>
-    </div>
+	{#if error}
+		<ErrorAlert message={error} />
+	{/if}
 
-    <div class="overflow-x-auto">
-      <table class="table table-zebra table-sm">
-        <thead>
-          <tr>
-            <th class="w-8"></th>
-            <th>Datum</th>
-            <th>Gegner</th>
-            <th>Resultat</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each games as g (g.game_pk)}
-            <tr class="hover cursor-pointer" onclick={() => toggleGame(g.game_pk)}>
-              <th>
-                <input
-                  type="checkbox"
-                  class="checkbox checkbox-sm"
-                  checked={selectedGamePks.has(g.game_pk)}
-                  onclick={(e) => e.stopPropagation()}
-                  onchange={() => toggleGame(g.game_pk)}
-                />
-              </th>
-              <td>{g.game_date}</td>
-              <td>{g.opponent}</td>
-              <td>
-                <span
-                  class="badge {g.decision === 'W'
-                    ? 'badge-success'
-                    : g.decision === 'L'
-                      ? 'badge-error'
-                      : 'badge-neutral'}"
-                >
-                  {g.decision}
-                </span>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
+	{#if loading}
+		<div class="flex justify-center py-12">
+			<span class="loading loading-lg loading-spinner"></span>
+		</div>
+	{:else if view === 'games' && games.length > 0}
+		{#key `${pitcherId}-${startDate}-${endDate}`}
+			<GameList {games} onViewGame={viewGame} onAnalyzeTrends={analyzeTrends} />
+		{/key}
+	{:else if view === 'games' && pitcherId !== null && !error}
+		<div class="alert">
+			<span>
+				No games found for {pitcherName} in the selected period.
+			</span>
+		</div>
+	{/if}
 
-    <Button variant="success" onclick={showSelected} disabled={loading}>Anzeigen</Button>
-  </fieldset>
-{/if}
+	{#if view === 'details' && selectedGameSummary}
+		<div class="space-y-4">
+			<button class="btn btn-ghost" onclick={backToGames}> ← Back to Games </button>
 
-	{#each summaries as s (s.game_date + s.opponent)}
-		<PitchTable summary={s} />
-	{/each}
-</main>
+			<GameDetails summary={selectedGameSummary} {pitcherName} />
+		</div>
+	{/if}
 
-<Modal bind:open={searchModalOpen} title="Pitcher & Zeitraum">
-  <div class="space-y-4">
-    <div class="join">
-      <TextInput bind:value={name} placeholder="Pitcher Name" joinItem />
-      <Button onclick={doSearch} joinItem>Suchen</Button>
-    </div>
+	{#if view === 'trends' && trendSummaries.length > 0}
+		<div class="space-y-4">
+			<button class="btn btn-ghost" onclick={backToGames}> ← Back to Games </button>
 
-    {#if matches.length > 0}
-      <select
-        value={selectedPitcherId}
-        onchange={(e) => {
-          const id = Number(e.currentTarget.value);
-          const m = matches.find((m) => m.key_mlbam === id);
-          if (m) selectPitcher(m);
-        }}
-        class="select select-bordered w-full"
-      >
-        <option value={null} disabled selected>Pitcher wählen</option>
-        {#each matches as m (m.key_mlbam)}
-          <option value={m.key_mlbam}>{m.full_name}</option>
-        {/each}
-      </select>
-    {/if}
-
-    <div class="join">
-      <TextInput type="date" bind:value={startDate} joinItem />
-      <TextInput type="date" bind:value={endDate} joinItem />
-    </div>
-
-    <Button onclick={loadGames} disabled={loading || !selectedPitcherId}>Spiele laden</Button>
-  </div>
-</Modal>
+			<TrendAnalysis summaries={trendSummaries} {pitcherName} />
+		</div>
+	{/if}
+</div>
