@@ -1,13 +1,15 @@
-178-105-134-48.sslip.io {
+static.48.134.105.178.clients.your-server.de {
     root * /srv/build
-    file_server
 
-    # WICHTIG: Verwende 'handle' statt 'handle_path', 
-    # damit das /api Präfix erhalten bleibt (oder zum Backend passt)
     handle /api/* {
+        uri strip_prefix /api
         reverse_proxy api:8000
     }
 
-    try_files {path} {path}/ /index.html
+    handle {
+        file_server
+        try_files {path} {path}/ /index.html
+    }
+
     encode gzip
 }
