@@ -38,7 +38,8 @@ services:
     image: pitcher-frontend-builder:latest
     command: echo "Frontend built successfully"
     volumes:
-      - frontend_dist:/app/dist
+      - frontend_dist:/srv
+
 
 volumes:
   fastapi_cache:
