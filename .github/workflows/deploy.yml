@@ -19,7 +19,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
-          sscript: |
+          script: |
             cd /apps/pitcher-stats || exit
             git pull 
             
