@@ -4,13 +4,30 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: fastapi-app
-    ports:
-      - "80:8000"  # Auf dem Server über Port 80 erreichbar
+    # Wir öffnen Port 8000 nur noch intern für Caddy, nicht mehr ins Internet
+    expose:
+      - "8000"
     environment:
       - PORT=8000
     volumes:
-      - fastapi_cache:/data  # Persistenter Cache auf dem Server
+      - fastapi_cache:/data
     restart: unless-stopped
+
+  # Caddy holt das SSL-Zertifikat und verschlüsselt die Verbindung
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-ssl
+    restart: unless-stopped
+    ports:
+      - "80:80"     # Für die Zertifikatsvalidierung
+      - "443:443"   # Für das sichere HTTPS
+    # WICHTIG: Hier ist deine sslip.io Domain eingetragen
+    command: caddy reverse-proxy --from 178-105-134-48.sslip.io --to api:8000
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   fastapi_cache:
+  caddy_data:
+  caddy_config:
