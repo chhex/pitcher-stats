@@ -1,0 +1,12 @@
+178-105-134-48.sslip.io {
+    # Zeigt auf den build-Ordner des SvelteKit-Adapters
+    root * /srv/build
+    file_server
+
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    try_files {path} {path}/ /index.html
+    encode gzip
+}

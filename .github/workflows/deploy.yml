@@ -1,4 +1,4 @@
-name: Continuous Deployment Backend
+name: Continuous Deployment
 
 on:
   push:
@@ -23,6 +23,6 @@ jobs:
             cd /apps/pitcher-stats || exit
             git pull 
             
-            # Hier sagen wir Docker, dass es die Produktions-Datei nutzen soll:
+            # Baut und startet Backend, Caddy und das Frontend-Build neu
             docker compose -f docker-compose.prod.yaml down
             docker compose -f docker-compose.prod.yaml up --build -d

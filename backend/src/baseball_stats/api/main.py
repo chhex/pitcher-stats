@@ -1,4 +1,3 @@
-# api/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from baseball_stats.api.routers import pitchers, games
@@ -9,7 +8,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://pitcher-stats.vercel.app",
+        "https://178-105-134-48.sslip.io",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
