@@ -1,12 +1,19 @@
-# Stage 1: Build
+# Stage 1: Build-Prozess (Node.js Umgebung)
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Abhängigkeiten installieren (nutzt package-lock.json falls vorhanden)
 COPY package*.json ./
 RUN npm ci
+
+# Quellcode kopieren und SvelteKit App bauen
 COPY . .
 RUN npm run build
 
-# Stage 2: Production (nur die gebauten Statischen Dateien)
+# Stage 2: Production-Image (schlanker Alpine-Container für Caddy)
 FROM alpine:latest
-WORKDIR /app
-COPY --from=builder /app/build /app/build
+WORKDIR /srv
+
+# Kopiert die gebauten statischen Dateien direkt nach /srv/build, 
+# damit Caddy sie über 'root * /srv/build' direkt ausliefern kann.
+COPY --from=builder /app/build /srv/build
