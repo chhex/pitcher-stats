@@ -1,9 +1,10 @@
 178-105-134-48.sslip.io {
-    # Zeigt auf den build-Ordner des SvelteKit-Adapters
     root * /srv/build
     file_server
 
-    handle_path /api/* {
+    # WICHTIG: Verwende 'handle' statt 'handle_path', 
+    # damit das /api Präfix erhalten bleibt (oder zum Backend passt)
+    handle /api/* {
         reverse_proxy api:8000
     }
 
