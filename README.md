@@ -123,4 +123,4 @@ Deployed on [Vercel](https://vercel.com) via GitHub import (Root Directory: `fro
 
 ## Acknowledgments
 
-This project wouldn't have been possible without the genuinely excellent work of the [pybaseball](https://github.com/jldbc/pybaseball) maintainers and contributors — thank you. Thanks also to [FastAPI](https://fastapi.tiangolo.com/) for making the backend a joy to build (Swagger UI for free!) and to [Svelte](https://svelte.dev/) for such a clean, low-ceremony approach to building the frontend. And, last but not least, this project definitely wouldn't have come together this quickly without [Claude](https://claude.ai).
+This project wouldn't have been possible without the genuinely excellent work of the [pybaseball](https://github.com/jldbc/pybaseball) maintainers and contributors — thank you. Thanks also to [FastAPI](https://fastapi.tiangolo.com/) for making the backend a joy to build (Swagger UI for free!) and to [Svelte](https://svelte.dev/) for such a clean, low-ceremony approach to building the frontend. 
