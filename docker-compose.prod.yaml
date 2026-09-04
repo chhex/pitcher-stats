@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fastapi-app
+    ports:
+      - "80:8000"  # Auf dem Server über Port 80 erreichbar
+    environment:
+      - PORT=8000
+    volumes:
+      - fastapi_cache:/data  # Persistenter Cache auf dem Server
+    restart: unless-stopped
+
+volumes:
+  fastapi_cache:
