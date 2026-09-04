@@ -116,10 +116,10 @@
 							<span class="loading loading-lg loading-spinner"></span>
 
 							<div class="text-center">
-								<p class="font-medium">Loading games…</p>
+								<p class="font-medium">Loading Pitcher(s)</p>
 
 								<p class="mt-1 text-sm text-base-content/50">
-									Larger date ranges may take a little while.
+									First search may take a little while.....
 								</p>
 							</div>  
 						</div>
