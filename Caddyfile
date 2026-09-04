@@ -1,0 +1,13 @@
+178-105-134-48.sslip.io {
+    root * /srv/build
+    file_server
+
+    # WICHTIG: Verwende 'handle' statt 'handle_path', 
+    # damit das /api Präfix erhalten bleibt (oder zum Backend passt)
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+
+    try_files {path} {path}/ /index.html
+    encode gzip
+}
