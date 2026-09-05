@@ -1,4 +1,4 @@
-static.48.134.105.178.clients.your-server.de {
+pitcher.watch, www.pitcher.watch {
     root * /srv/build
 
     handle /api/* {
