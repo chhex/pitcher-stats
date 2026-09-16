@@ -21,6 +21,9 @@
 		innings_pitched: string;
 		era: string;
 		strikeouts: number;
+		balls: number;
+		strikes: number;
+		hits: number;
 		total_pitches: number;
 		pitch_stats: Array<{
 			pitch_name: string;

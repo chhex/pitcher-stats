@@ -55,6 +55,7 @@ def summarize_game(game_df: pd.DataFrame, pitcher_id: int) -> dict:
         "innings_pitched": details["innings_pitched"],
         "earned_runs": details["earned_runs"],
         "era": details["era"],
+        "hits": details["hits"],
         "decision": details["decision"],
         "pitch_summary": pitch_summary,
     }

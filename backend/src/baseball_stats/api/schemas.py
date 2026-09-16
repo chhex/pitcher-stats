@@ -29,4 +29,5 @@ class GameSummary(BaseModel):
     strikes: int
     balls: int
     strikeouts: int
+    hits: int
     pitch_stats: list[PitchStat]

@@ -31,16 +31,17 @@ def fetch_game_details(game_pk: int, pitcher_id: int) -> dict:
 
     if not pitching_stats:
         return {"decision": decision, "innings_pitched": None, "earned_runs": None, "era": None}
-
     ip_str = pitching_stats.get("inningsPitched", "0.0")
     earned_runs = pitching_stats.get("earnedRuns", 0)
+    
     whole, _, partial_outs = ip_str.partition(".")
     ip_decimal = int(whole) + int(partial_outs or 0) / 3
     game_era = (earned_runs * 9 / ip_decimal) if ip_decimal > 0 else 0.0
-
+    hits = pitching_stats.get("hits", 0)
     return {
         "decision": decision,
         "innings_pitched": ip_str,
         "earned_runs": earned_runs,
-        "era": round(game_era, 2),
+        "era": round(game_era, 2), 
+        "hits": hits
     }
