@@ -50,6 +50,7 @@ def game_summary(pitcher_id: int, game_pk: int, start: str, end: str):
         strikes=summary["strikes"],
         balls=summary["balls"],
         strikeouts=summary["strikeouts"],
+        hits=summary["hits"],
         pitch_stats=[
             PitchStat(pitch_name=name, count=r["count"], avg_speed=r["avg_speed"], pct=r["pct"])
             for name, r in summary["pitch_summary"].iterrows()
