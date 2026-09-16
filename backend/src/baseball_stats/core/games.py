@@ -44,14 +44,13 @@ def summarize_game(game_df: pd.DataFrame, pitcher_id: int) -> dict:
     strikes = game_df["type"].isin(["S", "X"]).sum()
     balls = (game_df["type"] == "B").sum()
     strikeouts = game_df[game_df["events"] == "strikeout"].shape[0]
-
     return {
         "game_date": game_df["game_date"].iloc[0],
         "opponent": f"{game_df['away_team'].iloc[0]} @ {game_df['home_team'].iloc[0]}",
         "total_pitches": len(game_df),
-        "strikes": strikes,
-        "balls": balls,
-        "strikeouts": strikeouts,
+        "strikes": int(strikes),
+        "balls": int(balls),
+        "strikeouts": int(strikeouts),
         "innings_pitched": details["innings_pitched"],
         "earned_runs": details["earned_runs"],
         "era": details["era"],
