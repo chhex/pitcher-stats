@@ -20,6 +20,7 @@
 		decision: string;
 		innings_pitched: string;
 		era: string;
+		earned_runs: number;
 		strikeouts: number;
 		balls: number;
 		strikes: number;
