@@ -1,28 +1,8 @@
 <script lang="ts">
+	import type { ChartSeries } from '$lib/types/chart';
+	import type { GameSummary } from '$lib/types/pitcher';
 	import LineChart from './LineChart.svelte';
 
-	type PitchStat = {
-		pitch_name: string;
-		count: number;
-		avg_speed: number;
-		pct: number;
-	};
-
-	type GameSummary = {
-		game_date: string;
-		opponent: string;
-		decision: string;
-		innings_pitched: string;
-		era: string;
-		strikeouts: number;
-		total_pitches: number;
-		pitch_stats: PitchStat[];
-	};
-
-	type ChartSeries = {
-		name: string;
-		values: Array<number | null>;
-	};
 
 	type Props = {
 		summaries: GameSummary[];
@@ -54,6 +34,21 @@
 		{
 			name: 'Total Pitches',
 			values: sortedSummaries.map((summary) => summary.total_pitches)
+		}
+	]);
+
+	let performanceSeries = $derived<ChartSeries[]>([
+		{
+			name: 'Hits',
+			values: sortedSummaries.map((summary) => summary.hits)
+		},
+		{
+			name: 'Earned Runs',
+			values: sortedSummaries.map((summary) => summary.earned_runs)
+		},
+		{
+			name: 'Strikeouts',
+			values: sortedSummaries.map((summary) => summary.strikeouts)
 		}
 	]);
 
@@ -102,7 +97,6 @@
 
 		return innings;
 	}
-
 </script>
 
 <div class="space-y-6">
@@ -115,49 +109,47 @@
 	</div>
 
 	<!-- Workload -->
-<div class="grid gap-6 lg:grid-cols-2">
-	<!-- Pitch Count -->
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body gap-4">
-			<div>
-				<h3 class="card-title">
-					Pitch Count
-				</h3>
+	<div class="grid gap-6 lg:grid-cols-2">
+		<!-- Pitch Count -->
+		<div class="card bg-base-100 shadow-sm">
+			<div class="card-body gap-4">
+				<div>
+					<h3 class="card-title">Pitch Count</h3>
 
-				<p class="text-sm text-base-content/60">
-					Total pitches thrown per game.
-				</p>
+					<p class="text-sm text-base-content/60">Total pitches thrown per game.</p>
+				</div>
+
+				<LineChart {labels} series={workloadSeries} yLabel="Pitches" />
 			</div>
+		</div>
 
-			<LineChart
-				labels={labels}
-				series={workloadSeries}
-				yLabel="Pitches"
-			/>
+		<!-- Game Performance -->
+
+		<div class="card bg-base-100 shadow-sm">
+			<div class="card-body gap-4">
+				<div>
+					<h3 class="card-title">Game Performance</h3>
+
+					<p class="text-sm text-base-content/60">Hits, earned runs and strikeouts per game.</p>
+				</div>
+
+				<LineChart {labels} series={performanceSeries} yLabel="Count" />
+			</div>
+		</div>
+
+		<!-- Pitches / Inning -->
+		<div class="card bg-base-100 shadow-sm">
+			<div class="card-body gap-4">
+				<div>
+					<h3 class="card-title">Pitches / Inning</h3>
+
+					<p class="text-sm text-base-content/60">Average number of pitches thrown per inning.</p>
+				</div>
+
+				<LineChart {labels} series={pitchesPerInningSeries} yLabel="Pitches / Inning" />
+			</div>
 		</div>
 	</div>
-
-	<!-- Pitches / Inning -->
-	<div class="card bg-base-100 shadow-sm">
-		<div class="card-body gap-4">
-			<div>
-				<h3 class="card-title">
-					Pitches / Inning
-				</h3>
-
-				<p class="text-sm text-base-content/60">
-					Average number of pitches thrown per inning.
-				</p>
-			</div>
-
-			<LineChart
-				labels={labels}
-				series={pitchesPerInningSeries}
-				yLabel="Pitches / Inning"
-			/>
-		</div>
-	</div>
-</div>
 
 	<!-- Pitch Usage -->
 
@@ -205,15 +197,17 @@
 							<th>Opponent</th>
 							<th>Decision</th>
 							<th class="text-right">IP</th>
+							<th class="text-right">H</th>
+							<th class="text-right">ER</th>
+							<th class="text-right">SO</th>
 							<th class="text-right">ERA</th>
-							<th class="text-right">K</th>
 							<th class="text-right">Pitches</th>
-							<th class="text-right"> Pitches / Inning </th>
+							<th class="text-right">P / IP</th>
 						</tr>
 					</thead>
 
 					<tbody>
-						{#each sortedSummaries as summary}
+						{#each sortedSummaries as summary (summary.game_date + '-' + summary.opponent)}
 							<tr>
 								<td>{summary.game_date}</td>
 								<td>{summary.opponent}</td>
@@ -224,7 +218,11 @@
 								</td>
 
 								<td class="text-right tabular-nums">
-									{summary.era}
+									{summary.hits}
+								</td>
+
+								<td class="text-right tabular-nums">
+									{summary.earned_runs}
 								</td>
 
 								<td class="text-right tabular-nums">
@@ -232,8 +230,13 @@
 								</td>
 
 								<td class="text-right tabular-nums">
+									{summary.era}
+								</td>
+
+								<td class="text-right tabular-nums">
 									{summary.total_pitches}
 								</td>
+
 								<td class="text-right tabular-nums">
 									{(summary.total_pitches / inningsToNumber(summary.innings_pitched)).toFixed(1)}
 								</td>

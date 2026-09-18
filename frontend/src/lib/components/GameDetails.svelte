@@ -1,23 +1,7 @@
 <script lang="ts">
+	import type { GameSummary } from '$lib/types/pitcher';
 	import PitchMix from './PitchMix.svelte';
 
-	type PitchStat = {
-		pitch_name: string;
-		count: number;
-		avg_speed: number;
-		pct: number;
-	};
-
-	type GameSummary = {
-		game_date: string;
-		opponent: string;
-		decision: string;
-		innings_pitched: string;
-		era: string;
-		strikeouts: number;
-		total_pitches: number;
-		pitch_stats: PitchStat[];
-	};
 
 	let {
 		summary,
@@ -37,19 +21,14 @@
 <div class="space-y-6">
 	<div class="card bg-base-200 shadow-sm">
 		<div class="card-body gap-5">
-			<div
-				class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
-			>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<div class="flex flex-wrap items-center gap-3">
 						<h2 class="card-title text-2xl">
 							{pitcherName}
 						</h2>
 
-						<span
-							class="badge {decisionBadge[summary.decision] ??
-								'badge-neutral'}"
-						>
+						<span class="badge {decisionBadge[summary.decision] ?? 'badge-neutral'}">
 							{summary.decision}
 						</span>
 					</div>
@@ -62,43 +41,47 @@
 			</div>
 
 			<div
-				class="stats stats-vertical bg-base-100 shadow-none sm:stats-horizontal"
+				class="stats stats-vertical bg-base-100 shadow-none
+		sm:grid sm:grid-cols-3
+		lg:grid-cols-6"
 			>
 				<div class="stat">
-					<div class="stat-title">
-						Innings
-					</div>
-
+					<div class="stat-title">Innings</div>
 					<div class="stat-value text-2xl">
 						{summary.innings_pitched}
 					</div>
 				</div>
 
 				<div class="stat">
-					<div class="stat-title">
-						ERA
-					</div>
-
+					<div class="stat-title">Hits</div>
 					<div class="stat-value text-2xl">
-						{summary.era}
+						{summary.hits}
 					</div>
 				</div>
 
 				<div class="stat">
-					<div class="stat-title">
-						Strikeouts
+					<div class="stat-title">Earned Runs</div>
+					<div class="stat-value text-2xl">
+						{summary.earned_runs}
 					</div>
+				</div>
 
+				<div class="stat">
+					<div class="stat-title">Strikeouts</div>
 					<div class="stat-value text-2xl">
 						{summary.strikeouts}
 					</div>
 				</div>
 
 				<div class="stat">
-					<div class="stat-title">
-						Total Pitches
+					<div class="stat-title">ERA</div>
+					<div class="stat-value text-2xl">
+						{summary.era}
 					</div>
+				</div>
 
+				<div class="stat">
+					<div class="stat-title">Total Pitches</div>
 					<div class="stat-value text-2xl">
 						{summary.total_pitches}
 					</div>
