@@ -6,32 +6,13 @@
 	import GameDetails from '$lib/components/GameDetails.svelte';
 	import TrendAnalysis from '$lib/components/TrendAnalysis.svelte';
 	import ErrorAlert from '$lib/components/ErrorAlert.svelte';
+	import type { GameSummary } from '$lib/types/pitcher';
 
 	type Game = {
 		game_pk: number;
 		game_date: string;
 		opponent: string;
 		decision: string;
-	};
-
-	type GameSummary = {
-		game_date: string;
-		opponent: string;
-		decision: string;
-		innings_pitched: string;
-		era: string;
-		earned_runs: number;
-		strikeouts: number;
-		balls: number;
-		strikes: number;
-		hits: number;
-		total_pitches: number;
-		pitch_stats: Array<{
-			pitch_name: string;
-			count: number;
-			avg_speed: number;
-			pct: number;
-		}>;
 	};
 
 	type View = 'games' | 'details' | 'trends';
@@ -94,10 +75,7 @@
 				error = 'No games found for the selected period.';
 			}
 		} catch (e) {
-			error =
-				e instanceof Error
-					? e.message
-					: 'Failed to load games.';
+			error = e instanceof Error ? e.message : 'Failed to load games.';
 		} finally {
 			loading = null;
 		}
@@ -120,10 +98,7 @@
 			trendSummaries = [];
 			view = 'details';
 		} catch (e) {
-			error =
-				e instanceof Error
-					? e.message
-					: 'Failed to load game details.';
+			error = e instanceof Error ? e.message : 'Failed to load game details.';
 		} finally {
 			loading = null;
 		}
@@ -145,12 +120,7 @@
 
 				const results = await Promise.all(
 					batch.map((gamePk) =>
-						getGameSummary(
-							currentPitcherId!,
-							gamePk,
-							currentStartDate,
-							currentEndDate
-						)
+						getGameSummary(currentPitcherId!, gamePk, currentStartDate, currentEndDate)
 					)
 				);
 
@@ -161,10 +131,7 @@
 			gameSummary = null;
 			view = 'trends';
 		} catch (e) {
-			error =
-				e instanceof Error
-					? e.message
-					: 'Failed to load trend data.';
+			error = e instanceof Error ? e.message : 'Failed to load trend data.';
 		} finally {
 			loading = null;
 		}
@@ -180,12 +147,23 @@
 </script>
 
 <svelte:head>
-	<title>Pitcher Stats</title>
+	<title>Pitcher Watch – MLB Pitcher Analytics & Pitch Trends</title>
 
 	<meta
 		name="description"
-		content="Analyze MLB pitcher performance and pitch data."
+		content="Analyze MLB pitchers game by game. Explore pitch mix, velocity, workload, strikeouts, hits, earned runs and performance trends."
 	/>
+
+	<meta property="og:title" content="Pitcher Watch – MLB Pitcher Analytics & Pitch Trends" />
+
+	<meta
+		property="og:description"
+		content="Analyze MLB pitchers game by game. Explore pitch mix, velocity, workload and performance trends."
+	/>
+
+	<meta property="og:type" content="website" />
+
+	<meta property="og:url" content="https://pitcher.watch/" />
 </svelte:head>
 
 <header class="navbar border-b border-base-300 bg-base-100">
@@ -198,7 +176,7 @@
 
 <main class="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
 	<div>
-		<h1 class="text-3xl font-bold tracking-tight">Pitcher Analysis</h1>
+		<h1 class="text-3xl font-bold tracking-tight">MLB Pitcher Analysis</h1>
 
 		<p class="mt-1 text-base-content/60">
 			Analyze pitching performance, pitch mix and game trends.
@@ -211,7 +189,7 @@
 
 	{#if currentPitcherName && currentStartDate && currentEndDate}
 		<div class="flex flex-wrap items-center gap-2">
-			<span class="badge badge-primary badge-lg">
+			<span class="badge badge-lg badge-primary">
 				{currentPitcherName}
 			</span>
 
@@ -235,9 +213,7 @@
 				{:else if loading === 'details'}
 					<p class="font-medium">Loading game details…</p>
 
-					<p class="mt-1 text-sm text-base-content/50">
-						Fetching pitch data for this game.
-					</p>
+					<p class="mt-1 text-sm text-base-content/50">Fetching pitch data for this game.</p>
 				{:else if loading === 'trends'}
 					<p class="font-medium">Analyzing trends…</p>
 
@@ -249,30 +225,19 @@
 		</div>
 	{:else if view === 'games' && games.length > 0}
 		{#key `${currentPitcherId}-${currentStartDate}-${currentEndDate}`}
-			<GameList
-				{games}
-				onViewGame={viewGame}
-				onAnalyzeTrends={analyzeTrends}
-			/>
+			<GameList {games} onViewGame={viewGame} onAnalyzeTrends={analyzeTrends} />
 		{/key}
 	{:else if view === 'details' && gameSummary}
 		<div class="space-y-4">
-			<button class="btn btn-ghost" onclick={backToGames}>
-				← Back to Games
-			</button>
+			<button class="btn btn-ghost" onclick={backToGames}> ← Back to Games </button>
 
 			<GameDetails summary={gameSummary} pitcherName={currentPitcherName ?? ''} />
 		</div>
 	{:else if view === 'trends' && trendSummaries.length > 0}
 		<div class="space-y-4">
-			<button class="btn btn-ghost" onclick={backToGames}>
-				← Back to Games
-			</button>
+			<button class="btn btn-ghost" onclick={backToGames}> ← Back to Games </button>
 
-			<TrendAnalysis
-				summaries={trendSummaries}
-				pitcherName={currentPitcherName ?? ''}
-			/>
+			<TrendAnalysis summaries={trendSummaries} pitcherName={currentPitcherName ?? ''} />
 		</div>
 	{/if}
 </main>
