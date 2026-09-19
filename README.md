@@ -1,5 +1,7 @@
 # Pitcher Stats
 
+[![Continuous Deployment](https://github.com/chhex/pitcher-stats/actions/workflows/deploy.yml/badge.svg)](https://github.com/chhex/pitcher-stats/actions/workflows/deploy.yml)
+
 A web app for analyzing MLB pitcher statistics: search for a pitcher, list games within a date range, break down the pitch mix per game (including ERA/IP/W-L pulled from the official MLB boxscore), and compare multiple games side by side.
 
 Built on top of the fantastic [pybaseball](https://github.com/jldbc/pybaseball) library, which makes working with [Statcast](https://baseballsavant.mlb.com/) data (pitch type, velocity, spin rate, etc.) in Python genuinely pleasant — without pybaseball, this project would have taken a lot more effort.
