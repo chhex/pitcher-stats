@@ -16,33 +16,21 @@ services:
     restart: unless-stopped
 
   caddy:
-    image: caddy:2-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
     container_name: caddy-ssl
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - frontend_dist:/srv
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
       - api
 
-  # Baut das Frontend bei jedem Deployment im Docker-Container vor
-  frontend-builder:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-    image: pitcher-frontend-builder:latest
-    command: echo "Frontend built successfully"
-    volumes:
-      - frontend_dist:/srv
-
-
 volumes:
   fastapi_cache:
-  frontend_dist:
   caddy_data:
   caddy_config:
