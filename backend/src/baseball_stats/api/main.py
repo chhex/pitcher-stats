@@ -8,7 +8,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://178-105-134-48.sslip.io",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
