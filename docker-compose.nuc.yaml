@@ -16,8 +16,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.caddy
-    environment:
-      - SITE_ADDRESS=:80
     ports:
       - "127.0.0.1:8081:80"
     depends_on:

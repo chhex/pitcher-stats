@@ -1,6 +1,6 @@
-# Hetzner: Default (pitcher.watch, www) mit automatischem HTTPS
-# NUC 2:   SITE_ADDRESS=:80 -> nur HTTP, TLS macht Cloudflare
-{$SITE_ADDRESS:pitcher.watch, www.pitcher.watch} {
+# Nur HTTP: TLS terminiert Cloudflare, der Tunnel "nuc2" holt die Seite
+# auf 127.0.0.1:8081 ab (siehe docker-compose.nuc.yaml).
+:80 {
     root * /srv/build
 
     handle /api/* {
