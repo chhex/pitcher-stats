@@ -1,0 +1,25 @@
+# Deployment auf NUC 2 (Keller) hinter Cloudflare Tunnel "nuc2".
+# Kein HTTPS hier: Cloudflare terminiert TLS, der Tunnel holt die Seite
+# lokal auf 127.0.0.1:8081 ab. Keine offenen Ports nach aussen.
+name: pitcher
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8000
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    environment:
+      - SITE_ADDRESS=:80
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      - api
+    restart: unless-stopped

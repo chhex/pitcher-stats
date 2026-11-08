@@ -1,4 +1,6 @@
-pitcher.watch, www.pitcher.watch {
+# Hetzner: Default (pitcher.watch, www) mit automatischem HTTPS
+# NUC 2:   SITE_ADDRESS=:80 -> nur HTTP, TLS macht Cloudflare
+{$SITE_ADDRESS:pitcher.watch, www.pitcher.watch} {
     root * /srv/build
 
     handle /api/* {

@@ -4,8 +4,15 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
+  # Alter Weg: Hetzner-VPS per SSH. Bleibt bis zur Umschaltung als Rückfallebene,
+  # danach entfernen (inkl. Secrets VPS_HOST / VPS_SSH_KEY).
+  # Hinweis: appleboy/ssh-action ist durch die Actions-Einschränkung derzeit blockiert.
   deploy:
     runs-on: ubuntu-latest
 
@@ -24,3 +31,25 @@ jobs:
 
             docker compose -f docker-compose.prod.yaml up --build -d
             docker image prune -f
+
+  # Neuer Weg: Self-hosted Runner auf NUC 2 (Keller), hinter Cloudflare Tunnel.
+  deploy-nuc2:
+    runs-on: [self-hosted, Linux, nuc2]
+    concurrency:
+      group: deploy-nuc2
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build & Start
+        run: |
+          set -e
+          docker compose -f docker-compose.nuc.yaml up --build -d --remove-orphans
+          docker image prune -f
+
+      - name: Smoke-Test
+        run: |
+          sleep 5
+          curl -fsS -o /dev/null http://127.0.0.1:8081/ && echo "Frontend OK"
